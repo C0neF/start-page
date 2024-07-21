@@ -104,7 +104,7 @@
 </template>
 
 <script>
-import { ref, computed, watch, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { getBingDailyImage } from '../utlis/bingImageService';
 
 export default {
@@ -186,15 +186,15 @@ export default {
     }
 
     const setBingDailyImage = async () => {
-      try {
-        const imageUrl = await getBingDailyImage();
-        emit('setBackgroundImage', imageUrl);
-      } catch (error) {
-        console.error('Error fetching Bing daily image:', error);
-        // 使用默认图片
-        emit('setBackgroundImage', 'https://picsum.photos/1920/1080');
-      }
-    }
+  try {
+    const imageUrl = await getBingDailyImage();
+    emit('setBackgroundImage', imageUrl);
+  } catch (error) {
+    console.error('Error fetching Bing daily image:', error);
+    // 使用默认图片
+    emit('setBackgroundImage', 'https://picsum.photos/1920/1080');
+  }
+}
 
     const triggerFileInput = () => {
       const fileInput = document.querySelector('#fileInput')

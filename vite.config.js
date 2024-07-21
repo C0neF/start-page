@@ -5,11 +5,6 @@ export default defineConfig({
   plugins: [vue()],
   server: {
     proxy: {
-      '/bing-api': {
-        target: 'https://www.bing.com',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/bing-api/, '')
-      },
       '/icon-api-iowen': {
         target: 'https://api.iowen.cn',
         changeOrigin: true,
