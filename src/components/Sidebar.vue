@@ -104,7 +104,8 @@
 </template>
 
 <script>
-import { nextTick } from 'vue'
+import { ref, computed, watch, onMounted } from 'vue'
+import { getBingDailyImage } from '../utlis/bingImageService';
 
 export default {
   name: 'Sidebar',
@@ -132,31 +133,22 @@ export default {
     }
   },
   emits: ['close', 'linkAdded', 'linkUpdated', 'update:bookmarks', 'updateDefaultEngine', 'settingsImported', 'openAddLinkModal', 'openEngineManager', 'setBackgroundImage', 'setUnsplashImage', 'updateUnsplashInterval', 'updateUnsplashAccessKey'],
-  data() {
-    return {
-      unsplashChangeIntervalInput: this.unsplashChangeInterval,
-      unsplashAccessKey: localStorage.getItem('unsplashAccessKey') || '',
-      imageUrl: ''
-    }
-  },
-  watch: {
-    editingBookmark(newVal) {
-      if (newVal) {
-        this.$emit('openAddLinkModal')
-      }
-    },
-    unsplashChangeInterval(newVal) {
-      this.unsplashChangeIntervalInput = newVal
-    }
-  },
-  methods: {
-    exportSettings() {
+  setup(props, { emit }) {
+    const unsplashChangeIntervalInput = ref(props.unsplashChangeInterval)
+    const unsplashAccessKey = ref(localStorage.getItem('unsplashAccessKey') || '')
+    const imageUrl = ref('')
+
+    watch(() => props.unsplashChangeInterval, (newVal) => {
+      unsplashChangeIntervalInput.value = newVal
+    })
+
+    const exportSettings = () => {
       const settings = {
-        bookmarks: this.bookmarks,
-        searchEngines: this.searchEngines,
-        defaultEngineIndex: this.defaultEngineIndex,
-        unsplashChangeInterval: this.unsplashChangeIntervalInput,
-        unsplashAccessKey: this.unsplashAccessKey
+        bookmarks: props.bookmarks,
+        searchEngines: props.searchEngines,
+        defaultEngineIndex: props.defaultEngineIndex,
+        unsplashChangeInterval: unsplashChangeIntervalInput.value,
+        unsplashAccessKey: unsplashAccessKey.value
       }
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(settings))
       const downloadAnchorNode = document.createElement('a')
@@ -165,24 +157,25 @@ export default {
       document.body.appendChild(downloadAnchorNode)
       downloadAnchorNode.click()
       downloadAnchorNode.remove()
-    },
-    importSettings(event) {
+    }
+
+    const importSettings = (event) => {
       const file = event.target.files[0]
       if (file) {
         const reader = new FileReader()
         reader.onload = (e) => {
           try {
             const settings = JSON.parse(e.target.result)
-            this.$emit('settingsImported', settings)
+            emit('settingsImported', settings)
             if (settings.unsplashChangeInterval !== undefined) {
-              this.unsplashChangeIntervalInput = settings.unsplashChangeInterval
-              this.updateUnsplashInterval()
+              unsplashChangeIntervalInput.value = settings.unsplashChangeInterval
+              updateUnsplashInterval()
             }
             if (settings.unsplashAccessKey) {
-              this.unsplashAccessKey = settings.unsplashAccessKey
-              this.saveUnsplashAccessKey()
+              unsplashAccessKey.value = settings.unsplashAccessKey
+              saveUnsplashAccessKey()
             }
-            this.$emit('close')
+            emit('close')
           } catch (error) {
             console.error('Error parsing JSON:', error)
             alert('无效的设置文件')
@@ -190,52 +183,69 @@ export default {
         }
         reader.readAsText(file)
       }
-    },
-    async setBingDailyImage() {
+    }
+
+    const setBingDailyImage = async () => {
       try {
-        const response = await fetch('/bing-api/HPImageArchive.aspx?format=js&idx=0&n=1')
-        const data = await response.json()
-        const imageUrl = `https://www.bing.com${data.images[0].url}`
-        this.$emit('setBackgroundImage', imageUrl)
+        const imageUrl = await getBingDailyImage();
+        emit('setBackgroundImage', imageUrl);
       } catch (error) {
-        console.error('Error fetching Bing daily image:', error)
+        console.error('Error fetching Bing daily image:', error);
+        // 使用默认图片
+        emit('setBackgroundImage', 'https://picsum.photos/1920/1080');
       }
-    },
-    triggerFileInput() {
-      console.log('Triggering file input')
-      nextTick(() => {
-        if (this.$refs.fileInput) {
-          console.log('File input ref found')
-          this.$refs.fileInput.click()
-        } else {
-          console.error('File input ref not found')
-        }
-      })
-    },
-    handleFileUpload(event) {
+    }
+
+    const triggerFileInput = () => {
+      const fileInput = document.querySelector('#fileInput')
+      if (fileInput) {
+        fileInput.click()
+      }
+    }
+
+    const handleFileUpload = (event) => {
       const file = event.target.files[0]
       if (file) {
         const reader = new FileReader()
         reader.onload = (e) => {
-          this.$emit('setBackgroundImage', e.target.result)
+          emit('setBackgroundImage', e.target.result)
         }
         reader.readAsDataURL(file)
       }
-    },
-    setCustomImageUrl() {
-      if (this.imageUrl) {
-        this.$emit('setBackgroundImage', this.imageUrl)
+    }
+
+    const setCustomImageUrl = () => {
+      if (imageUrl.value) {
+        emit('setBackgroundImage', imageUrl.value)
       }
-    },
-    setUnsplashImage() {
-      this.$emit('setUnsplashImage')
-    },
-    updateUnsplashInterval() {
-      this.$emit('updateUnsplashInterval', parseInt(this.unsplashChangeIntervalInput))
-    },
-    saveUnsplashAccessKey() {
-      localStorage.setItem('unsplashAccessKey', this.unsplashAccessKey)
-      this.$emit('updateUnsplashAccessKey', this.unsplashAccessKey)
+    }
+
+    const setUnsplashImage = () => {
+      emit('setUnsplashImage')
+    }
+
+    const updateUnsplashInterval = () => {
+      emit('updateUnsplashInterval', parseInt(unsplashChangeIntervalInput.value))
+    }
+
+    const saveUnsplashAccessKey = () => {
+      localStorage.setItem('unsplashAccessKey', unsplashAccessKey.value)
+      emit('updateUnsplashAccessKey', unsplashAccessKey.value)
+    }
+
+    return {
+      unsplashChangeIntervalInput,
+      unsplashAccessKey,
+      imageUrl,
+      exportSettings,
+      importSettings,
+      setBingDailyImage,
+      triggerFileInput,
+      handleFileUpload,
+      setCustomImageUrl,
+      setUnsplashImage,
+      updateUnsplashInterval,
+      saveUnsplashAccessKey
     }
   }
 }

@@ -5,6 +5,11 @@ export default defineConfig({
   plugins: [vue()],
   server: {
     proxy: {
+      '/bing-api': {
+        target: 'https://www.bing.com',
+        changeOrigin: true,
+        rewrite: (path) => path.replace(/^\/bing-api/, '')
+      },
       '/icon-api-iowen': {
         target: 'https://api.iowen.cn',
         changeOrigin: true,
@@ -19,11 +24,6 @@ export default defineConfig({
         target: 'https://kongfandong.cn',
         changeOrigin: true,
         rewrite: (path) => path.replace(/^\/icon-api-kongfandong/, '/api/icon')
-      },
-      '/bing-api': {
-        target: 'https://www.bing.com',
-        changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/bing-api/, '')
       },
       '/unsplash-api': {
         target: 'https://api.unsplash.com',

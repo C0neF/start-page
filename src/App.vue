@@ -175,6 +175,7 @@ import Sidebar from './components/Sidebar.vue'
 import AddLinkModal from './components/AddLinkModal.vue'
 import EngineManager from './components/EngineManager.vue'
 import Clock from './components/Clock.vue'
+import { getBingDailyImage } from './utlis/bingImageService'
 
 export default {
   name: 'App',
@@ -354,10 +355,21 @@ export default {
       updateDefaultEngine(index)
     }
 
-    const setBackgroundImage = (imageUrl) => {
-      backgroundImage.value = imageUrl
-      localStorage.setItem('backgroundImage', imageUrl)
+    const setBackgroundImage = async (imageUrl) => {
+  if (imageUrl) {
+    backgroundImage.value = imageUrl;
+  } else {
+    try {
+      const bingImageUrl = await getBingDailyImage();
+      backgroundImage.value = bingImageUrl;
+    } catch (error) {
+      console.error('Error setting background image:', error);
+      // 使用默认图片
+      backgroundImage.value = 'https://picsum.photos/1920/1080';
     }
+  }
+  localStorage.setItem('backgroundImage', backgroundImage.value);
+}
 
     const setUnsplashImage = async () => {
       if (!unsplashAccessKey.value) {
@@ -399,10 +411,12 @@ export default {
       checkMobile()
       window.addEventListener('resize', checkMobile)
 
-      const savedBackgroundImage = localStorage.getItem('backgroundImage')
-      if (savedBackgroundImage) {
-        backgroundImage.value = savedBackgroundImage
-      }
+      const savedBackgroundImage = localStorage.getItem('backgroundImage');
+  if (savedBackgroundImage) {
+    backgroundImage.value = savedBackgroundImage;
+  } else {
+    setBackgroundImage(); // 这将获取 Bing 图片或使用默认图片
+  }
 
       if (unsplashChangeInterval.value > 0) {
         unsplashIntervalId = setInterval(setUnsplashImage, unsplashChangeInterval.value * 1000)
