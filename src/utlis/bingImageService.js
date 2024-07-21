@@ -2,50 +2,28 @@ const BING_API_URL = 'https://www.bing.com/HPImageArchive.aspx?format=js&idx=0&n
 
 export async function getBingDailyImage() {
   const isDevelopment = import.meta.env.DEV;
-  const apiUrl = isDevelopment ? '/bing-api/HPImageArchive.aspx?format=js&idx=0&n=1&mkt=en-US' : BING_API_URL;
 
   try {
-    let data;
+    let imageUrl;
+
     if (isDevelopment) {
-      // 在开发环境中使用 fetch 和代理
-      const response = await fetch(apiUrl);
+      // 开发环境：直接请求 Bing API（通过 Vite 代理）
+      const response = await fetch('/bing-api' + BING_API_URL.substring(BING_API_URL.indexOf('/')));
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
-      data = await response.json();
+      const data = await response.json();
+      if (!data.images || data.images.length === 0) {
+        throw new Error('No image data received from Bing API');
+      }
+      imageUrl = 'https://www.bing.com' + data.images[0].url;
     } else {
-      // 在生产环境中使用 XMLHttpRequest
-      data = await new Promise((resolve, reject) => {
-        const xhr = new XMLHttpRequest();
-        xhr.open('GET', apiUrl, true);
-        xhr.responseType = 'json';
-
-        xhr.onload = function() {
-          if (xhr.status === 200) {
-            resolve(xhr.response);
-          } else {
-            reject(new Error(`HTTP error! status: ${xhr.status}`));
-          }
-        };
-
-        xhr.onerror = function() {
-          reject(new Error('Network error occurred'));
-        };
-
-        xhr.send();
-      });
-    }
-
-    if (!data.images || data.images.length === 0) {
-      throw new Error('No image data received from Bing API');
+      // 生产环境：直接请求 Bing API
+      imageUrl = await fetchBingImageUrl();
     }
 
     // 获取最高分辨率的图片 URL
-    const baseUrl = 'https://www.bing.com';
-    const imageUrl = data.images[0].url;
-    const highResUrl = getHighestResolutionUrl(baseUrl + imageUrl);
-
-    return highResUrl;
+    return getHighestResolutionUrl(imageUrl);
   } catch (error) {
     console.error('Error fetching Bing daily image:', error);
     return 'https://picsum.photos/1920/1080'; // 默认图片
@@ -53,7 +31,46 @@ export async function getBingDailyImage() {
 }
 
 function getHighestResolutionUrl(url) {
-  // Bing 图片 URL 通常包含 '_1920x1080.jpg'，我们将其替换为更高的分辨率
-  // UHD 分辨率通常是 3840x2160
   return url.replace('_1920x1080.jpg', '_UHD.jpg');
+}
+
+async function fetchBingImageUrl() {
+  // 使用无 CORS 限制的方法请求 Bing API
+  const response = await fetch(BING_API_URL, { mode: 'no-cors' });
+  if (!response.ok) {
+    throw new Error(`HTTP error! status: ${response.status}`);
+  }
+  const text = await response.text();
+  const data = JSON.parse(text);
+  if (!data.images || data.images.length === 0) {
+    throw new Error('No image data received from Bing API');
+  }
+  return 'https://www.bing.com' + data.images[0].url;
+}
+
+// 服务器端函数（用于 Netlify, Vercel, 等）
+export async function handler(event, context) {
+  try {
+    const imageUrl = await fetchBingImageUrl();
+    return {
+      statusCode: 200,
+      body: JSON.stringify({ imageUrl })
+    };
+  } catch (error) {
+    console.error('Error in server function:', error);
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'Failed to fetch Bing image' })
+    };
+  }
+}
+
+// Express.js 中间件
+export function expressBingImageMiddleware(req, res) {
+  fetchBingImageUrl()
+    .then(imageUrl => res.json({ imageUrl }))
+    .catch(error => {
+      console.error('Error in Express middleware:', error);
+      res.status(500).json({ error: 'Failed to fetch Bing image' });
+    });
 }
