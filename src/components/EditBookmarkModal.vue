@@ -91,34 +91,35 @@ export default {
     })
 
     const updateIconUrl = async () => {
-      debugInfo.value = '开始更新图标 URL...'
+  debugInfo.value = '开始更新图标 URL...'
 
-      if (editedBookmark.value.url) {
-        try {
-          let url = editedBookmark.value.url
-          if (!url.startsWith('http://') && !url.startsWith('https://')) {
-            url = 'https://' + url
-          }
-          
-          const domain = new URL(url).hostname;
-          apiIcons.value = [
-            { api: 'iowen', url: `https://api.iowen.cn/favicon/${domain}.png` },
-            { api: 'horse', url: `https://icon.horse/icon/${domain}` },
-            { api: 'kongfandong', url: `https://kongfandong.cn/api/icon?url=${encodeURIComponent(domain)}` }
-          ];
-          
-          currentIconIndex.value = 0
-          userIconUrl.value = '' // 清除用户自定义的图标URL
-          updateIconPreview()
-          debugInfo.value = `已成功获取图标，当前显示: ${apiIcons.value[currentIconIndex.value].api}`
-        } catch (error) {
-          console.error('Error updating icon URL:', error)
-          debugInfo.value = `更新图标 URL 时出错: ${error.message}`
-          apiIcons.value = []
-          iconPreview.value = ''
-        }
+  if (editedBookmark.value.url) {
+    try {
+      let url = editedBookmark.value.url
+      if (!url.startsWith('http://') && !url.startsWith('https://')) {
+        url = 'https://' + url
       }
+      
+      const domain = new URL(url).hostname;
+      apiIcons.value = [
+        { api: 'google', url: `https://api.20010522.xyz/icon-1/${domain}` },
+        { api: 'iowen', url: `https://api.20010522.xyz/icon-2/${domain}` },
+        { api: 'horse', url: `https://api.20010522.xyz/icon-3/${domain}` },
+        { api: 'kongfandong', url: `https://api.20010522.xyz/icon-4/${domain}` }
+      ];
+      
+      currentIconIndex.value = 0
+      userIconUrl.value = '' // 清除用户自定义的图标URL
+      updateIconPreview()
+      debugInfo.value = `已成功获取图标，当前显示: ${apiIcons.value[currentIconIndex.value].api}`
+    } catch (error) {
+      console.error('Error updating icon URL:', error)
+      debugInfo.value = `更新图标 URL 时出错: ${error.message}`
+      apiIcons.value = []
+      iconPreview.value = ''
     }
+  }
+}
 
     const debouncedUpdateIconUrl = () => {
       clearTimeout(debounceTimer)

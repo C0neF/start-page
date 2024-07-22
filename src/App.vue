@@ -28,18 +28,18 @@
         />
       </div>
 
-      <!-- 书签列表组件 -->
+      <!-- 书签列表组件（桌面端） -->
       <LinkList 
-        v-if="!isMobile"
-        :bookmarks="bookmarks" 
-        @update:bookmarks="updateBookmarks" 
-        :showLeftSidebar="showLeftSidebar"
-        @close-left-sidebar="closeLeftSidebar"
-        @open-add-bookmark-modal="openAddLinkModal"
-        :isMobile="isMobile"
-        class="w-full"
-        v-show="!isSearchActive"
-      />
+  v-if="!isMobile && showDesktopBookmarks"
+  :bookmarks="bookmarks" 
+  @update:bookmarks="updateBookmarks" 
+  :showLeftSidebar="showLeftSidebar"
+  @close-left-sidebar="closeLeftSidebar"
+  @open-add-bookmark-modal="openAddLinkModal"
+  :isMobile="isMobile"
+  class="w-full desktop-bookmark-bar"
+  v-show="!isSearchActive"
+/>
 
       <!-- 响应式设备的书签按钮 -->
       <button 
@@ -78,7 +78,7 @@
       <!-- 遮罩层 -->
       <transition name="fade">
         <div 
-          v-if="showLeftSidebar || showSidebar || showAddLinkModal || showEngineManager" 
+          v-if="showLeftSidebar || showSidebar || showAddLinkModal || showEngineManager || showBottomBookmarkBar" 
           class="fixed inset-0 bg-black bg-opacity-50 z-30"
           @click.stop="closeAllSidebars"
         ></div>
@@ -113,25 +113,27 @@
       <transition name="slide">
         <div v-if="showSidebar" class="fixed inset-y-0 right-0 w-3/4 max-w-md z-40 overflow-hidden sidebar right-sidebar backdrop-blur-md bg-white bg-opacity-10 dark:bg-gray-800 dark:bg-opacity-10">
           <Sidebar 
-            :show="showSidebar"
-            :bookmarks="bookmarks"
-            :searchEngines="searchEngines"
-            :defaultEngineIndex="currentEngineIndex"
-            :unsplashChangeInterval="unsplashChangeInterval"
-            @close="showSidebar = false"
-            @linkAdded="handleLinkAdded"
-            @linkUpdated="handleLinkUpdated"
-            @update:bookmarks="updateBookmarks"
-            @updateDefaultEngine="updateDefaultEngine"
-            @settingsImported="importSettings"
-            @openAddLinkModal="openAddLinkModal"
-            @openEngineManager="openEngineManager"
-            @setBackgroundImage="setBackgroundImage"
-            @setUnsplashImage="setUnsplashImage"
-            @updateUnsplashInterval="updateUnsplashInterval"
-            @updateUnsplashAccessKey="updateUnsplashAccessKey"
-            class="h-full overflow-y-auto"
-          />
+  :show="showSidebar"
+  :bookmarks="bookmarks"
+  :searchEngines="searchEngines"
+  :defaultEngineIndex="currentEngineIndex"
+  :unsplashChangeInterval="unsplashChangeInterval"
+  v-model:showDesktopBookmarks="showDesktopBookmarks"
+  :isMobile="isMobile"
+  @close="showSidebar = false"
+  @linkAdded="handleLinkAdded"
+  @linkUpdated="handleLinkUpdated"
+  @update:bookmarks="updateBookmarks"
+  @updateDefaultEngine="updateDefaultEngine"
+  @settingsImported="importSettings"
+  @openAddLinkModal="openAddLinkModal"
+  @openEngineManager="openEngineManager"
+  @setBackgroundImage="setBackgroundImage"
+  @setUnsplashImage="setUnsplashImage"
+  @updateUnsplashInterval="updateUnsplashInterval"
+  @updateUnsplashAccessKey="updateUnsplashAccessKey"
+  class="h-full overflow-y-auto"
+/>
         </div>
       </transition>
 
@@ -161,8 +163,32 @@
 
       <!-- 实时时间显示（桌面端和移动端都显示） -->
       <div class="fixed bottom-4 left-0 right-0 flex justify-center z-20">
-        <Clock />
+        <Clock @click="toggleBottomBookmarkBar" />
       </div>
+
+      <!-- 底部书签栏（仅桌面端） -->
+      <transition name="slide-up">
+        <div v-if="!isMobile && showBottomBookmarkBar" class="fixed bottom-0 left-0 right-0 dark:bg-gray-800 shadow-lg z-40">
+          <div class="container mx-auto px-4 py-2">
+            <div class="flex justify-between items-center mb-2">
+              <h3 class="text-lg font-bold text-white">书签</h3>
+              <button @click="closeBottomBookmarkBar" class="text-gray-200 hover:hover:text-gray-200 transition duration-300 z-20 dark:text-gray-400 dark:hover:text-gray-200">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </button>
+            </div>
+            <LinkList 
+              :bookmarks="bookmarks" 
+              @update:bookmarks="updateBookmarks" 
+              :showLeftSidebar="false"
+              @open-add-bookmark-modal="openAddLinkModal"
+              :isMobile="false"
+              class="w-full"
+            />
+          </div>
+        </div>
+      </transition>
     </div>
   </div>
 </template>
@@ -202,6 +228,22 @@ export default {
     const unsplashChangeInterval = ref(parseInt(localStorage.getItem('unsplashChangeInterval') || '0'))
     const unsplashAccessKey = ref(localStorage.getItem('unsplashAccessKey') || '')
     let unsplashIntervalId = null
+    const showDesktopBookmarks = ref(JSON.parse(localStorage.getItem('showDesktopBookmarks') || 'true'))
+    const showBottomBookmarkBar = ref(false)
+    const shouldShowBottomBookmarkBar = computed(() => {
+  console.log('Computing shouldShowBottomBookmarkBar:', !isMobile.value, !showDesktopBookmarks.value)
+  return !isMobile.value && !showDesktopBookmarks.value
+})
+
+    // 添加一个 watch 来监听变化
+watch(showDesktopBookmarks, (newValue) => {
+  console.log('showDesktopBookmarks changed:', newValue)
+  localStorage.setItem('showDesktopBookmarks', JSON.stringify(newValue))
+  // 如果切换到显示桌面书签，则隐藏底部书签栏
+  if (newValue) {
+    showBottomBookmarkBar.value = false
+  }
+})
 
     const toggleSidebar = () => {
       showSidebar.value = !showSidebar.value
@@ -209,6 +251,7 @@ export default {
         showLeftSidebar.value = false
         showAddLinkModal.value = false
         showEngineManager.value = false
+        showBottomBookmarkBar.value = false
       }
     }
 
@@ -218,6 +261,7 @@ export default {
         showSidebar.value = false
         showAddLinkModal.value = false
         showEngineManager.value = false
+        showBottomBookmarkBar.value = false
       }
     }
 
@@ -230,6 +274,7 @@ export default {
       showLeftSidebar.value = false
       showAddLinkModal.value = false
       showEngineManager.value = false
+      showBottomBookmarkBar.value = false
     }
 
     const toggleNightMode = () => {
@@ -316,6 +361,9 @@ export default {
       if (settings.unsplashAccessKey) {
         updateUnsplashAccessKey(settings.unsplashAccessKey)
       }
+      if (settings.showDesktopBookmarks !== undefined) {
+        updateShowDesktopBookmarks(settings.showDesktopBookmarks)
+      }
     }
 
     const handleOutsideClick = (event) => {
@@ -356,20 +404,20 @@ export default {
     }
 
     const setBackgroundImage = async (imageUrl) => {
-  if (imageUrl) {
-    backgroundImage.value = imageUrl;
-  } else {
-    try {
-      const bingImageUrl = await getBingDailyImage();
-      backgroundImage.value = bingImageUrl;
-    } catch (error) {
-      console.error('Error setting background image:', error);
-      // 使用默认图片
-      backgroundImage.value = 'https://picsum.photos/1920/1080';
+      if (imageUrl) {
+        backgroundImage.value = imageUrl;
+      } else {
+        try {
+          const bingImageUrl = await getBingDailyImage();
+          backgroundImage.value = bingImageUrl;
+        } catch (error) {
+          console.error('Error setting background image:', error);
+          // 使用默认图片
+          backgroundImage.value = 'https://picsum.photos/1920/1080';
+        }
+      }
+      localStorage.setItem('backgroundImage', backgroundImage.value);
     }
-  }
-  localStorage.setItem('backgroundImage', backgroundImage.value);
-}
 
     const setUnsplashImage = async () => {
       if (!unsplashAccessKey.value) {
@@ -401,6 +449,27 @@ export default {
       localStorage.setItem('unsplashAccessKey', key)
     }
 
+    const updateShowDesktopBookmarks = (value) => {
+      showDesktopBookmarks.value = value
+      localStorage.setItem('showDesktopBookmarks', JSON.stringify(value))
+      // 如果切换到显示桌面书签，则隐藏底部书签栏
+      if (value) {
+        showBottomBookmarkBar.value = false
+      }
+    }
+
+    const toggleBottomBookmarkBar = () => {
+  console.log('Toggling bottom bookmark bar')
+  if (shouldShowBottomBookmarkBar.value) {
+    showBottomBookmarkBar.value = !showBottomBookmarkBar.value
+    showSidebar.value = false
+  }
+}
+
+    const closeBottomBookmarkBar = () => {
+      showBottomBookmarkBar.value = false
+    }
+
     onMounted(() => {
       loadBookmarks()
       loadSearchEngines()
@@ -412,11 +481,11 @@ export default {
       window.addEventListener('resize', checkMobile)
 
       const savedBackgroundImage = localStorage.getItem('backgroundImage');
-  if (savedBackgroundImage) {
-    backgroundImage.value = savedBackgroundImage;
-  } else {
-    setBackgroundImage(); // 这将获取 Bing 图片或使用默认图片
-  }
+      if (savedBackgroundImage) {
+        backgroundImage.value = savedBackgroundImage;
+      } else {
+        setBackgroundImage(); // 这将获取 Bing 图片或使用默认图片
+      }
 
       if (unsplashChangeInterval.value > 0) {
         unsplashIntervalId = setInterval(setUnsplashImage, unsplashChangeInterval.value * 1000)
@@ -449,6 +518,9 @@ export default {
       showEngineManager,
       backgroundImage,
       unsplashChangeInterval,
+      showDesktopBookmarks,
+      showBottomBookmarkBar,
+      shouldShowBottomBookmarkBar,
       toggleSidebar,
       toggleLeftSidebar,
       closeLeftSidebar,
@@ -470,7 +542,10 @@ export default {
       setBackgroundImage,
       setUnsplashImage,
       updateUnsplashInterval,
-      updateUnsplashAccessKey
+      updateUnsplashAccessKey,
+      updateShowDesktopBookmarks,
+      toggleBottomBookmarkBar,
+      closeBottomBookmarkBar
     }
   }
 }
@@ -551,6 +626,17 @@ export default {
   transition: transform 0.3s ease;
 }
 
+/* 底部书签栏动画 */
+.slide-up-enter-active,
+.slide-up-leave-active {
+  transition: transform 0.3s ease;
+}
+
+.slide-up-enter-from,
+.slide-up-leave-to {
+  transform: translateY(100%);
+}
+
 /* 遮罩层动画 */
 .fade-enter-active,
 .fade-leave-active {
@@ -575,7 +661,6 @@ export default {
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
   z-index: 40;
   overflow-y: auto;
-  
 }
 
 .sidebar.left-sidebar {
@@ -708,161 +793,24 @@ a:focus, input:focus {
   }
 }
 
-/* 模态框样式 */
-.modal-overlay {
+/* 底部书签栏样式 */
+.bottom-bookmark-bar {
   position: fixed;
-  top: 0;
+  bottom: 0;
   left: 0;
   right: 0;
-  bottom: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 50;
-}
-
-.modal-content {
   background-color: rgba(255, 255, 255, 0.9);
-  padding: 2rem;
-  border-radius: 0.5rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  max-width: 90%;
-  width: 400px;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  z-index: 30;
+  padding: 1rem;
+  transition: transform 0.3s ease;
 }
 
-.dark .modal-content {
-  background-color: rgba(45, 55, 72, 0.9);
-  color: #e2e8f0;
-}
-
-/* 输入框样式 */
-input[type="text"],
-input[type="url"] {
-  width: 100%;
-  padding: 0.5rem;
-  margin-bottom: 1rem;
-  border: 1px solid #e2e8f0;
-  border-radius: 0.25rem;
-  font-size: 1rem;
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
-.dark input[type="text"],
-.dark input[type="url"] {
-  border-color: #4a5568;
-  color: #e2e8f0;
-  background-color: rgba(26, 32, 44, 0.1);
-}
-
-/* 模态框按钮样式 */
-.modal-buttons {
-  display: flex;
-  justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 1rem;
-}
-
-.modal-button {
-  padding: 0.5rem 1rem;
-  border-radius: 0.25rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.3s ease;
-}
-
-.modal-button-primary {
-  background-color: #4299e1;
-  color: white;
-}
-
-.modal-button-primary:hover {
-  background-color: #3182ce;
-}
-
-.modal-button-secondary {
-  background-color: #e2e8f0;
-  color: #4a5568;
-}
-
-.modal-button-secondary:hover {
-  background-color: #cbd5e0;
-}
-
-.dark .modal-button-secondary {
-  background-color: #4a5568;
-  color: #e2e8f0;
-}
-
-.dark .modal-button-secondary:hover {
-  background-color: #2d3748;
-}
-
-/* 毛玻璃效果 */
-.backdrop-blur-md {
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
-}
-
-@supports not (backdrop-filter: blur(8px)) {
-  .backdrop-blur-md {
-    background-color: rgba(255, 255, 255, 0.8);
-  }
-
-  .dark .backdrop-blur-md {
-    background-color: rgba(17, 24, 39, 0.8);
-  }
-}
-
-/* 搜索栏激活状态样式 */
-.search-bar-container.active {
-  z-index: 20;
-}
-
-@media (min-width: 769px) {
-  .search-bar-container.active {
-    transform: translateY(-10px);
-  }
-}
-
-/* 时钟样式 */
-.clock-container {
-  display: inline-flex;
-  padding: 0.5rem 1rem;
-  background-color: rgba(255, 255, 255, 0.2);
-  border-radius: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  font-size: 1rem; /* 默认字体大小 */
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(5px);
-}
-
-.dark .clock-container {
-  background-color: rgba(26, 32, 44, 0.2);
-}
-
-/* 响应式调整 */
-@media (max-width: 640px) {
-  .clock-container {
-    font-size: 0.875rem; /* 在小屏幕上减小字体大小 */
-    padding: 0.25rem 0.5rem; /* 在小屏幕上减小内边距 */
-  }
-}
-
-.opacity-0 {
-  opacity: 0 !important;
-}
-
-.invisible {
-  visibility: hidden !important;
-}
-
-.transition-all {
-  transition-property: all;
-  transition-duration: 300ms;
-  transition-timing-function: ease-in-out;
+.dark .bottom-bookmark-bar {
+  background-color: rgba(26, 32, 44, 0.9);
+  box-shadow: 0 -2px 10px rgba(255, 255, 255, 0.1);
 }
 
 /* 背景图片样式 */
@@ -903,4 +851,33 @@ body {
 .dark body {
   color: #e2e8f0;
 }
+
+/* 时钟样式调整 */
+.clock-container {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.clock-container:hover {
+  transform: scale(1.05);
+}
+
+/* 毛玻璃效果背景 */
+.backdrop-blur-md {
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+@supports not (backdrop-filter: blur(12px)) {
+  .backdrop-blur-md {
+    background-color: rgba(255, 255, 255, 0.8);
+  }
+
+  .dark .backdrop-blur-md {
+    background-color: rgba(26, 32, 44, 0.8);
+  }
+}
+
+
+
 </style>

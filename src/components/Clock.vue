@@ -1,26 +1,47 @@
 <template>
-  <div class="clock-container">
+  <div class="clock-container" @click="handleClick">
     <div class="time">{{ currentTime }}</div>
+    <div v-if="!isMobile" class="bookmark-hint">
+    </div>
   </div>
 </template>
 
 <script>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 export default {
   name: 'Clock',
-  setup() {
+  props: {
+    isMobile: {
+      type: Boolean,
+      default: false
+    },
+    showBottomBookmarkBar: {
+      type: Boolean,
+      default: false
+    }
+  },
+  emits: ['toggleBottomBookmarkBar'],
+  setup(props, { emit }) {
     const currentTime = ref('')
+    const currentDate = ref('')
     let timer = null
 
-    const updateTime = () => {
+    const updateDateTime = () => {
       const now = new Date()
       currentTime.value = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+      currentDate.value = now.toLocaleDateString('zh-CN', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })
+    }
+
+    const handleClick = () => {
+      if (!props.isMobile) {
+        emit('toggleBottomBookmarkBar')
+      }
     }
 
     onMounted(() => {
-      updateTime()
-      timer = setInterval(updateTime, 100)
+      updateDateTime()
+      timer = setInterval(updateDateTime, 100)
     })
 
     onUnmounted(() => {
@@ -29,8 +50,15 @@ export default {
       }
     })
 
+    const bookmarkHint = computed(() => {
+      return props.showBottomBookmarkBar ? '点击关闭书签栏' : '点击打开书签栏'
+    })
+
     return {
-      currentTime
+      currentTime,
+      currentDate,
+      handleClick,
+      bookmarkHint
     }
   }
 }

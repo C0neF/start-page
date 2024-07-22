@@ -20,6 +20,24 @@
           </button>
         </div>
 
+        <div v-if="!isMobile" class="settings-group">
+  <h3 class="text-lg font-semibold mb-2 text-white dark:text-gray-200">桌面书签显示</h3>
+  <div class="flex items-center justify-between">
+    <span class="text-sm font-medium text-gray-300">隐藏</span>
+    <label class="relative inline-flex items-center cursor-pointer mx-4">
+      <input 
+        type="checkbox" 
+        v-model="localShowDesktopBookmarks" 
+        @change="toggleDesktopBookmarks" 
+        class="sr-only peer"
+      >
+      <div class="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600"></div>
+    </label>
+    <span class="text-sm font-medium text-gray-300">显示</span>
+  </div>
+</div>
+
+
         <div>
           <h3 class="text-lg font-semibold mb-2 text-white dark:text-gray-200">导入/导出设置</h3>
           <div class="flex space-x-2">
@@ -62,12 +80,12 @@
             </div>
             <div class="flex space-x-2">
               <div class="flex-1">
-                <button @click="setUnsplashImage" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
+                <button @click="setUnsplashImage" class="unsplash-button w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-md transition duration-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2">
                   Unsplash
                 </button>
               </div>
               <div class="flex-1 flex items-center">
-                <div class="flex items-center space-x-1 mr-2">
+                <div class="flex items-center space-x-1 mr-2 ">
                   <input 
                     :value="unsplashChangeIntervalInput"
                     @input="unsplashChangeIntervalInput = $event.target.value"
@@ -77,14 +95,13 @@
                     class="w-16 px-2 py-1 bg-white bg-opacity-10 border border-white border-opacity-20 rounded text-white appearance-none text-center"
                     placeholder="间隔"
                   >
-                  <span class="text-white text-sm whitespace-nowrap">秒</span>
                 </div>
                 <button @click="updateUnsplashInterval" class="flex-grow whitespace-nowrap bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-2 rounded transition duration-300 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 text-sm">
                   保存
                 </button>
               </div>
             </div>
-            <div class="text-white text-sm text-center">(间隔为 0 时禁用自动切换)</div>
+            <div class="text-white text-sm text-center">(单位秒,间隔为 0 时不切换)</div>
             <div class="flex space-x-2">
               <input 
                 v-model="unsplashAccessKey" 
@@ -104,7 +121,7 @@
 </template>
 
 <script>
-import { ref, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import { getBingDailyImage } from '../utlis/bingImageService';
 
 export default {
@@ -130,16 +147,43 @@ export default {
     unsplashChangeInterval: {
       type: Number,
       default: 0
+    },
+    showDesktopBookmarks: {
+      type: Boolean,
+      default: true
+    },
+    isMobile: {
+      type: Boolean,
+      default: false
     }
   },
-  emits: ['close', 'linkAdded', 'linkUpdated', 'update:bookmarks', 'updateDefaultEngine', 'settingsImported', 'openAddLinkModal', 'openEngineManager', 'setBackgroundImage', 'setUnsplashImage', 'updateUnsplashInterval', 'updateUnsplashAccessKey'],
+  emits: [
+    'close', 
+    'linkAdded', 
+    'linkUpdated', 
+    'update:bookmarks', 
+    'updateDefaultEngine', 
+    'settingsImported', 
+    'openAddLinkModal', 
+    'openEngineManager', 
+    'setBackgroundImage', 
+    'setUnsplashImage', 
+    'updateUnsplashInterval', 
+    'updateUnsplashAccessKey',
+    'update:showDesktopBookmarks'
+  ],
   setup(props, { emit }) {
     const unsplashChangeIntervalInput = ref(props.unsplashChangeInterval)
     const unsplashAccessKey = ref(localStorage.getItem('unsplashAccessKey') || '')
     const imageUrl = ref('')
+    const localShowDesktopBookmarks = ref(props.showDesktopBookmarks)
 
     watch(() => props.unsplashChangeInterval, (newVal) => {
       unsplashChangeIntervalInput.value = newVal
+    })
+
+    watch(() => props.showDesktopBookmarks, (newVal) => {
+      localShowDesktopBookmarks.value = newVal
     })
 
     const exportSettings = () => {
@@ -148,7 +192,8 @@ export default {
         searchEngines: props.searchEngines,
         defaultEngineIndex: props.defaultEngineIndex,
         unsplashChangeInterval: unsplashChangeIntervalInput.value,
-        unsplashAccessKey: unsplashAccessKey.value
+        unsplashAccessKey: unsplashAccessKey.value,
+        showDesktopBookmarks: localShowDesktopBookmarks.value
       }
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(settings))
       const downloadAnchorNode = document.createElement('a')
@@ -175,6 +220,10 @@ export default {
               unsplashAccessKey.value = settings.unsplashAccessKey
               saveUnsplashAccessKey()
             }
+            if (settings.showDesktopBookmarks !== undefined) {
+              localShowDesktopBookmarks.value = settings.showDesktopBookmarks
+              toggleDesktopBookmarks()
+            }
             emit('close')
           } catch (error) {
             console.error('Error parsing JSON:', error)
@@ -186,15 +235,15 @@ export default {
     }
 
     const setBingDailyImage = async () => {
-  try {
-    const imageUrl = await getBingDailyImage();
-    emit('setBackgroundImage', imageUrl);
-  } catch (error) {
-    console.error('Error fetching Bing daily image:', error);
-    // 使用默认图片
-    emit('setBackgroundImage', 'https://picsum.photos/1920/1080');
-  }
-}
+      try {
+        const imageUrl = await getBingDailyImage();
+        emit('setBackgroundImage', imageUrl);
+      } catch (error) {
+        console.error('Error fetching Bing daily image:', error);
+        // 使用默认图片
+        emit('setBackgroundImage', 'https://picsum.photos/1920/1080');
+      }
+    }
 
     const triggerFileInput = () => {
       const fileInput = document.querySelector('#fileInput')
@@ -220,8 +269,25 @@ export default {
       }
     }
 
-    const setUnsplashImage = () => {
-      emit('setUnsplashImage')
+    const setUnsplashImage = async () => {
+      if (!unsplashAccessKey.value) {
+        console.error('Unsplash Access Key is not set')
+        return
+      }
+      try {
+        const response = await fetch('https://api.20010522.xyz/unsplash/photos/random', {
+          headers: {
+            'X-Unsplash-Api-Key': unsplashAccessKey.value
+          }
+        })
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        const data = await response.json()
+        emit('setBackgroundImage', data.urls.regular)
+      } catch (error) {
+        console.error('Error fetching Unsplash image:', error)
+      }
     }
 
     const updateUnsplashInterval = () => {
@@ -233,10 +299,16 @@ export default {
       emit('updateUnsplashAccessKey', unsplashAccessKey.value)
     }
 
+    const toggleDesktopBookmarks = () => {
+  console.log('Toggling desktop bookmarks:', localShowDesktopBookmarks.value)
+  emit('update:showDesktopBookmarks', localShowDesktopBookmarks.value)
+}
+
     return {
       unsplashChangeIntervalInput,
       unsplashAccessKey,
       imageUrl,
+      localShowDesktopBookmarks,
       exportSettings,
       importSettings,
       setBingDailyImage,
@@ -245,7 +317,8 @@ export default {
       setCustomImageUrl,
       setUnsplashImage,
       updateUnsplashInterval,
-      saveUnsplashAccessKey
+      saveUnsplashAccessKey,
+      toggleDesktopBookmarks
     }
   }
 }
@@ -259,12 +332,14 @@ export default {
   right: 0;
   width: 100%;
   max-width: 400px;
-  background-color: #fff;
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   z-index: 40;
   transition: transform 0.3s ease-in-out;
   will-change: transform;
-  box-shadow: none;
-  border: none;
+  box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .sidebar::-webkit-scrollbar {
@@ -272,16 +347,16 @@ export default {
 }
 
 .sidebar::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: rgba(241, 241, 241, 0.1);
 }
 
 .sidebar::-webkit-scrollbar-thumb {
-  background: #888;
+  background: rgba(136, 136, 136, 0.5);
   border-radius: 3px;
 }
 
 .sidebar::-webkit-scrollbar-thumb:hover {
-  background: #555;
+  background: rgba(85, 85, 85, 0.7);
 }
 
 button {
@@ -299,19 +374,20 @@ button:active {
 }
 
 .dark .sidebar {
-  background-color: #1a202c;
+  background-color: rgba(26, 32, 44, 0.1);
+  border-left: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .dark .sidebar::-webkit-scrollbar-track {
-  background: #2d3748;
+  background: rgba(45, 55, 72, 0.1);
 }
 
 .dark .sidebar::-webkit-scrollbar-thumb {
-  background: #4a5568;
+  background: rgba(74, 85, 104, 0.5);
 }
 
 .dark .sidebar::-webkit-scrollbar-thumb:hover {
-  background: #718096;
+  background: rgba(113, 128, 150, 0.7);
 }
 
 @media (max-width: 768px) {
@@ -354,7 +430,8 @@ input[type="number"] {
 
 /* 增强输入框样式 */
 input[type="text"],
-input[type="number"] {
+input[type="number"],
+input[type="password"] {
   background-color: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: white;
@@ -362,7 +439,8 @@ input[type="number"] {
 }
 
 input[type="text"]:focus,
-input[type="number"]:focus {
+input[type="number"]:focus,
+input[type="password"]:focus {
   background-color: rgba(255, 255, 255, 0.2);
   border-color: rgba(255, 255, 255, 0.3);
   outline: none;
@@ -370,14 +448,16 @@ input[type="number"]:focus {
 
 /* 暗色模式下的输入框样式 */
 .dark input[type="text"],
-.dark input[type="number"] {
+.dark input[type="number"],
+.dark input[type="password"] {
   background-color: rgba(0, 0, 0, 0.2);
   border-color: rgba(255, 255, 255, 0.1);
   color: #e2e8f0;
 }
 
 .dark input[type="text"]:focus,
-.dark input[type="number"]:focus {
+.dark input[type="number"]:focus,
+.dark input[type="password"]:focus {
   background-color: rgba(0, 0, 0, 0.3);
   border-color: rgba(255, 255, 255, 0.2);
 }
@@ -404,22 +484,14 @@ button:active {
   }
   
   input[type="number"] {
-    width: 3rem;
+    width: 2rem;
     padding: 0.25rem;
   }
   
   button {
-    padding: 0.25rem 0.5rem;
+    padding: 0.5rem;
   }
-}
 
-/* 确保输入框在所有设备上都是居中对齐的文本 */
-input[type="number"] {
-  text-align: center;
-}
-
-/* 在小屏幕上优化布局 */
-@media (max-width: 640px) {
   .flex-wrap {
     flex-wrap: wrap;
   }
@@ -427,5 +499,52 @@ input[type="number"] {
   .flex-grow {
     flex-grow: 1;
   }
+
 }
+
+/* 确保输入框在所有设备上都是居中对齐的文本 */
+input[type="number"] {
+  text-align: center;
+}
+
+
+
+/* 新增：桌面书签显示/隐藏按钮样式 */
+.toggle-desktop-bookmarks {
+  background-color: #4299e1;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  font-weight: bold;
+  transition: all 0.3s ease;
+}
+
+.toggle-desktop-bookmarks:hover {
+  background-color: #3182ce;
+}
+
+.dark .toggle-desktop-bookmarks {
+  background-color: #2b6cb0;
+}
+
+.dark .toggle-desktop-bookmarks:hover {
+  background-color: #2c5282;
+}
+
+@media (max-width: 400px) {
+
+  input {
+    width: 100%;
+  }
+
+  .unsplash-button {
+  width: 100%; /* 或者您想要的任何宽度 */
+  }
+
+}
+
+.peer:checked ~ .peer-checked\:after\:translate-x-full::after {
+  transition: transform 0.3s ease-in-out;
+}
+
 </style>

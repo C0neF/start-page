@@ -97,7 +97,7 @@
 </template>
 
 <script>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import EditBookmarkModal from './EditBookmarkModal.vue'
 
 export default {
@@ -117,6 +117,10 @@ export default {
     isMobile: {
       type: Boolean,
       default: false
+    },
+    showDesktopBookmarks: {
+      type: Boolean,
+      default: true
     }
   },
   emits: ['update:bookmarks', 'close-left-sidebar', 'edit-bookmark', 'open-add-bookmark-modal'],
@@ -139,6 +143,10 @@ export default {
         rows.push(props.bookmarks.slice(i, i + 2))
       }
       return rows
+    })
+
+    const visibleBookmarks = computed(() => {
+      return props.isMobile || props.showDesktopBookmarks ? props.bookmarks : []
     })
 
     const openLink = (url) => {
@@ -197,14 +205,38 @@ export default {
       }
     }
 
-    // New method for opening add bookmark modal
     const openAddBookmarkModal = () => {
       emit('open-add-bookmark-modal')
     }
 
+    onMounted(() => {
+      // Adjust itemsPerRow based on screen size if needed
+      const adjustItemsPerRow = () => {
+        if (window.innerWidth > 1536) {
+          itemsPerRow.value = 8
+        } else if (window.innerWidth > 1280) {
+          itemsPerRow.value = 6
+        } else if (window.innerWidth > 1024) {
+          itemsPerRow.value = 5
+        } else if (window.innerWidth > 768) {
+          itemsPerRow.value = 4
+        } else {
+          itemsPerRow.value = 3
+        }
+      }
+
+      adjustItemsPerRow()
+      window.addEventListener('resize', adjustItemsPerRow)
+
+      return () => {
+        window.removeEventListener('resize', adjustItemsPerRow)
+      }
+    })
+
     return {
       bookmarkRows,
       mobileBookmarkRows,
+      visibleBookmarks,
       itemsPerRow,
       showEditModal,
       editingBookmark,
@@ -431,7 +463,7 @@ export default {
 .mobile-bookmark-name {
   font-size: 0.875rem;
   font-weight: 500;
-  color: #000000;
+  color: #ffffff;
   text-align: center;
   white-space: nowrap;
   overflow: hidden;
@@ -600,6 +632,68 @@ export default {
   .mobile-delete-button svg {
     width: 1.1rem;
     height: 1.1rem;
+  }
+}
+
+/* 底部书签栏样式 */
+.bottom-bookmark-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(255, 255, 255, 0.5); /* 更透明的背景 */
+  backdrop-filter: blur(15px); /* 增加模糊效果 */
+  -webkit-backdrop-filter: blur(15px);
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  transition: transform 0.5s ease; /* 减慢过渡速度 */
+  transform: translateY(100%); /* 初始状态隐藏 */
+}
+
+.bottom-bookmark-bar.show {
+  transform: translateY(0); /* 显示状态 */
+}
+
+.dark .bottom-bookmark-bar {
+  background-color: rgba(26, 32, 44, 0.5); /* 深色模式更透明的背景 */
+  box-shadow: 0 -2px 10px rgba(255, 255, 255, 0.1);
+}
+
+/* 为不支持 backdrop-filter 的浏览器提供后备方案 */
+@supports not (backdrop-filter: blur(15px)) {
+  .bottom-bookmark-bar {
+    background-color: rgba(255, 255, 255, 0.9);
+  }
+
+  .dark .bottom-bookmark-bar {
+    background-color: rgba(26, 32, 44, 0.9);
+  }
+}
+
+/* 底部书签栏中的书签样式 */
+.bottom-bookmark-bar .bookmark-wrapper {
+  flex: 0 0 calc(10% - 1rem);
+  max-width: calc(10% - 1rem);
+}
+
+@media (max-width: 1280px) {
+  .bottom-bookmark-bar .bookmark-wrapper {
+    flex: 0 0 calc(12.5% - 1rem);
+    max-width: calc(12.5% - 1rem);
+  }
+}
+
+@media (max-width: 1024px) {
+  .bottom-bookmark-bar .bookmark-wrapper {
+    flex: 0 0 calc(14.285% - 1rem);
+    max-width: calc(14.285% - 1rem);
+  }
+}
+
+@media (max-width: 768px) {
+  .bottom-bookmark-bar .bookmark-wrapper {
+    flex: 0 0 calc(16.666% - 1rem);
+    max-width: calc(16.666% - 1rem);
   }
 }
 </style>
