@@ -1,5 +1,5 @@
 <template>
-  <div id="app" class="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300 relative" @click="handleOutsideClick">
+ <div id="app" class="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300 relative" @click="handleOutsideClick">
     <!-- 背景图片 -->
     <div v-if="backgroundImage" class="fixed inset-0 z-0">
       <img :src="backgroundImage" alt="Background" class="w-full h-full object-cover">
@@ -15,7 +15,41 @@
     ></div>
     
     <div :class="['container', 'mx-auto', 'px-4', 'py-8', 'flex', 'flex-col', 'items-center', 'relative', 'min-h-screen', { 'mobile-layout': isMobile }]">
-      <h3 :class="['text-2xl', 'font-bold', 'mb-8', 'text-center', 'text-white', { 'mobile-title': isMobile }]">个人起始页</h3>
+      <!-- 顶部按钮栏 -->
+    <div class="fixed top-0 left-0 right-0 flex justify-between items-center p-4 z-30 top-button-bar">
+      <!-- 响应式设备的书签按钮 -->
+      <button 
+        v-if="isMobile"
+        @click.stop="toggleLeftSidebar" 
+        class="text-white hover:text-gray-200 transition-all duration-300"
+        :class="{ 'opacity-0 invisible': showLeftSidebar }"
+      >
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+        </svg>
+      </button>
+
+      <!-- 占位符 div，用于在桌面模式下保持布局 -->
+      <div v-if="!isMobile" class="w-6"></div>
+
+      <!-- 夜间模式切换按钮（桌面端和移动端） -->
+      <button @click.stop="toggleNightMode" class="text-white hover:text-gray-200 transition duration-300">
+        <svg v-if="isNightMode" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+        </svg>
+        <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+        </svg>
+      </button>
+    </div>
+
+      <!-- 时钟组件 -->
+      <Clock 
+        :class="['mb-8', 'text-center', 'text-white', { 'mobile-title': isMobile }]"
+        :isMobile="isMobile"
+        :showBottomBookmarkBar="showBottomBookmarkBar"
+        @toggleBottomBookmarkBar="toggleBottomBookmarkBar"
+      />
       
       <!-- 搜索栏组件 -->
       <div :class="['w-full', 'max-w-2xl', 'search-bar-container', { 'active': isSearchActive }]">
@@ -28,30 +62,19 @@
         />
       </div>
 
-      <!-- 书签列表组件（桌面端） -->
+      <!-- 书签列表组件（桌面端主页） -->
       <LinkList 
-  v-if="!isMobile && showDesktopBookmarks"
-  :bookmarks="bookmarks" 
-  @update:bookmarks="updateBookmarks" 
-  :showLeftSidebar="showLeftSidebar"
-  @close-left-sidebar="closeLeftSidebar"
-  @open-add-bookmark-modal="openAddLinkModal"
-  :isMobile="isMobile"
-  class="w-full desktop-bookmark-bar"
-  v-show="!isSearchActive"
-/>
-
-      <!-- 响应式设备的书签按钮 -->
-      <button 
-        v-if="isMobile"
-        @click.stop="toggleLeftSidebar" 
-        class="fixed top-4 left-4 text-white hover:text-gray-200 transition-all duration-300 z-50"
-        :class="{ 'opacity-0 invisible': showLeftSidebar }"
-      >
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-        </svg>
-      </button>
+        v-if="!isMobile && showDesktopBookmarks"
+        :bookmarks="bookmarks" 
+        @update:bookmarks="updateBookmarks" 
+        :showLeftSidebar="showLeftSidebar"
+        @close-left-sidebar="closeLeftSidebar"
+        @open-add-bookmark-modal="openAddLinkModal"
+        :isMobile="isMobile"
+        :isBookmarkBar="false"
+        class="w-full desktop-bookmark-bar"
+        v-show="!isSearchActive"
+      />
 
       <!-- 设置按钮（所有设备都显示） -->
       <button 
@@ -62,16 +85,6 @@
         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-        </svg>
-      </button>
-
-      <!-- 夜间模式切换按钮 -->
-      <button @click.stop="toggleNightMode" class="fixed top-4 right-4 text-white hover:text-gray-200 transition duration-300 z-20">
-        <svg v-if="isNightMode" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-        </svg>
-        <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
         </svg>
       </button>
 
@@ -103,6 +116,7 @@
               @close-left-sidebar="closeLeftSidebar"
               @open-add-bookmark-modal="openAddLinkModal"
               :isMobile="true"
+              :isBookmarkBar="false"
               class="w-full"
             />
           </div>
@@ -113,27 +127,27 @@
       <transition name="slide">
         <div v-if="showSidebar" class="fixed inset-y-0 right-0 w-3/4 max-w-md z-40 overflow-hidden sidebar right-sidebar backdrop-blur-md bg-white bg-opacity-10 dark:bg-gray-800 dark:bg-opacity-10">
           <Sidebar 
-  :show="showSidebar"
-  :bookmarks="bookmarks"
-  :searchEngines="searchEngines"
-  :defaultEngineIndex="currentEngineIndex"
-  :unsplashChangeInterval="unsplashChangeInterval"
-  v-model:showDesktopBookmarks="showDesktopBookmarks"
-  :isMobile="isMobile"
-  @close="showSidebar = false"
-  @linkAdded="handleLinkAdded"
-  @linkUpdated="handleLinkUpdated"
-  @update:bookmarks="updateBookmarks"
-  @updateDefaultEngine="updateDefaultEngine"
-  @settingsImported="importSettings"
-  @openAddLinkModal="openAddLinkModal"
-  @openEngineManager="openEngineManager"
-  @setBackgroundImage="setBackgroundImage"
-  @setUnsplashImage="setUnsplashImage"
-  @updateUnsplashInterval="updateUnsplashInterval"
-  @updateUnsplashAccessKey="updateUnsplashAccessKey"
-  class="h-full overflow-y-auto"
-/>
+            :show="showSidebar"
+            :bookmarks="bookmarks"
+            :searchEngines="searchEngines"
+            :defaultEngineIndex="currentEngineIndex"
+            :unsplashChangeInterval="unsplashChangeInterval"
+            v-model:showDesktopBookmarks="showDesktopBookmarks"
+            :isMobile="isMobile"
+            @close="showSidebar = false"
+            @linkAdded="handleLinkAdded"
+            @linkUpdated="handleLinkUpdated"
+            @update:bookmarks="updateBookmarks"
+            @updateDefaultEngine="updateDefaultEngine"
+            @settingsImported="importSettings"
+            @openAddLinkModal="openAddLinkModal"
+            @openEngineManager="openEngineManager"
+            @setBackgroundImage="setBackgroundImage"
+            @setUnsplashImage="setUnsplashImage"
+            @updateUnsplashInterval="updateUnsplashInterval"
+            @updateUnsplashAccessKey="updateUnsplashAccessKey"
+            class="h-full overflow-y-auto"
+          />
         </div>
       </transition>
 
@@ -161,11 +175,6 @@
         </div>
       </transition>
 
-      <!-- 实时时间显示（桌面端和移动端都显示） -->
-      <div class="fixed bottom-4 left-0 right-0 flex justify-center z-20">
-        <Clock @click="toggleBottomBookmarkBar" />
-      </div>
-
       <!-- 底部书签栏（仅桌面端） -->
       <transition name="slide-up">
         <div v-if="!isMobile && showBottomBookmarkBar" class="fixed bottom-0 left-0 right-0 dark:bg-gray-800 shadow-lg z-40">
@@ -184,6 +193,7 @@
               :showLeftSidebar="false"
               @open-add-bookmark-modal="openAddLinkModal"
               :isMobile="false"
+              :isBookmarkBar="true"
               class="w-full"
             />
           </div>
@@ -202,6 +212,7 @@ import AddLinkModal from './components/AddLinkModal.vue'
 import EngineManager from './components/EngineManager.vue'
 import Clock from './components/Clock.vue'
 import { getBingDailyImage } from './utlis/bingImageService'
+
 
 export default {
   name: 'App',
@@ -404,20 +415,14 @@ watch(showDesktopBookmarks, (newValue) => {
     }
 
     const setBackgroundImage = async (imageUrl) => {
-      if (imageUrl) {
-        backgroundImage.value = imageUrl;
-      } else {
-        try {
-          const bingImageUrl = await getBingDailyImage();
-          backgroundImage.value = bingImageUrl;
-        } catch (error) {
-          console.error('Error setting background image:', error);
-          // 使用默认图片
-          backgroundImage.value = 'https://picsum.photos/1920/1080';
-        }
-      }
-      localStorage.setItem('backgroundImage', backgroundImage.value);
-    }
+  if (imageUrl) {
+    backgroundImage.value = imageUrl;
+  } else {
+    // 移除默认图片，使用纯色背景
+    backgroundImage.value = '';
+  }
+  localStorage.setItem('backgroundImage', backgroundImage.value);
+}
 
     const setUnsplashImage = async () => {
       if (!unsplashAccessKey.value) {
@@ -481,6 +486,7 @@ watch(showDesktopBookmarks, (newValue) => {
       window.addEventListener('resize', checkMobile)
 
       const savedBackgroundImage = localStorage.getItem('backgroundImage');
+
       if (savedBackgroundImage) {
         backgroundImage.value = savedBackgroundImage;
       } else {
@@ -575,18 +581,17 @@ watch(showDesktopBookmarks, (newValue) => {
 /* 响应式设备样式 */
 @media (max-width: 768px) {
   .mobile-layout {
-    padding-top: 4rem;
+    padding-top: 3rem; /* 移除顶部 padding */
   }
 
   .mobile-title {
-    position: fixed;
-    top: 1rem;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 30;
-    padding: 0.5rem 1rem;
-    border-radius: 0.5rem;
-    backdrop-filter: blur(5px);
+    position: static; /* 移除固定定位 */
+    transform: none;
+    z-index: auto;
+    padding: 0;
+    border-radius: 0;
+    backdrop-filter: none;
+    margin-top: -1.5rem; /* 确保时钟在移动设备上有足够的上边距 */
   }
 
   .search-bar-container {
@@ -601,6 +606,19 @@ watch(showDesktopBookmarks, (newValue) => {
   .search-bar-container.active {
     top: 4rem;
     transform: translateX(-50%);
+  }
+
+  button.fixed.top-4.left-4,
+  button.fixed.top-4.right-4 {
+    top: 0.5rem !important;
+  }
+
+  button.fixed.top-4.left-4 {
+    left: 0.5rem !important;
+  }
+
+  button.fixed.top-4.right-4 {
+    right: 0.5rem !important;
   }
 }
 
@@ -799,7 +817,7 @@ a:focus, input:focus {
   bottom: 0;
   left: 0;
   right: 0;
-  background-color: rgba(255, 255, 255, 0.9);
+  background-color: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
@@ -809,7 +827,7 @@ a:focus, input:focus {
 }
 
 .dark .bottom-bookmark-bar {
-  background-color: rgba(26, 32, 44, 0.9);
+  background-color: rgba(26, 32, 44, 0.1);
   box-shadow: 0 -2px 10px rgba(255, 255, 255, 0.1);
 }
 
@@ -878,6 +896,29 @@ body {
   }
 }
 
+/* 桌面书签栏样式 */
+.desktop-bookmark-bar {
+  margin-top: 2rem;
+  padding: 1rem;
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border-radius: 1rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
 
+.dark .desktop-bookmark-bar {
+  background-color: rgba(26, 32, 44, 0.1);
+}
+
+@supports not (backdrop-filter: blur(10px)) {
+  .desktop-bookmark-bar {
+    background-color: rgba(255, 255, 255, 0.8);
+  }
+
+  .dark .desktop-bookmark-bar {
+    background-color: rgba(26, 32, 44, 0.8);
+  }
+}
 
 </style>

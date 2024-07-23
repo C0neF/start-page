@@ -101,7 +101,7 @@
                 </button>
               </div>
             </div>
-            <div class="text-white text-sm text-center">(单位秒,间隔为 0 时不切换)</div>
+            <div class="text-white text-sm text-center">(单位秒,为 0 时不切换)</div>
             <div class="flex space-x-2">
               <input 
                 v-model="unsplashAccessKey" 
@@ -359,20 +359,6 @@ export default {
   background: rgba(85, 85, 85, 0.7);
 }
 
-button {
-  transition: all 0.2s ease-in-out;
-}
-
-button:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-button:active {
-  transform: translateY(0);
-  box-shadow: none;
-}
-
 .dark .sidebar {
   background-color: rgba(26, 32, 44, 0.1);
   border-left: 1px solid rgba(255, 255, 255, 0.05);
@@ -499,15 +485,12 @@ button:active {
   .flex-grow {
     flex-grow: 1;
   }
-
 }
 
 /* 确保输入框在所有设备上都是居中对齐的文本 */
 input[type="number"] {
   text-align: center;
 }
-
-
 
 /* 新增：桌面书签显示/隐藏按钮样式 */
 .toggle-desktop-bookmarks {
@@ -532,19 +515,16 @@ input[type="number"] {
 }
 
 @media (max-width: 400px) {
-
   input {
     width: 100%;
   }
 
   .unsplash-button {
-  width: 100%; /* 或者您想要的任何宽度 */
+    width: 100%;
   }
-
 }
 
 .peer:checked ~ .peer-checked\:after\:translate-x-full::after {
   transition: transform 0.3s ease-in-out;
 }
-
 </style>

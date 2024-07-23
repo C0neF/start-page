@@ -5,25 +5,29 @@ export default defineConfig({
   plugins: [vue()],
   server: {
     proxy: {
-      '/icon-api-iowen': {
-        target: 'https://api.iowen.cn',
+      '/icon-1': {
+        target: 'https://api.20010522.xyz',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/icon-api-iowen/, '/favicon/get')
       },
-      '/icon-api-horse': {
-        target: 'https://icon.horse',
+      '/icon-2': {
+        target: 'https://api.20010522.xyz',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/icon-api-horse/, '/icon')
       },
-      '/icon-api-kongfandong': {
-        target: 'https://kongfandong.cn',
+      '/icon-3': {
+        target: 'https://api.20010522.xyz',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/icon-api-kongfandong/, '/api/icon')
       },
-      '/unsplash-api': {
-        target: 'https://api.unsplash.com',
+      '/icon-4': {
+        target: 'https://api.20010522.xyz',
         changeOrigin: true,
-        rewrite: (path) => path.replace(/^\/unsplash-api/, '')
+      },
+      '/unsplash': {
+        target: 'https://api.20010522.xyz',
+        changeOrigin: true,
+      },
+      '/bing': {
+        target: 'https://api.20010522.xyz',
+        changeOrigin: true,
       }
     }
   }

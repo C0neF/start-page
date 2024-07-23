@@ -333,19 +333,16 @@ export default {
   color: inherit;
 }
 
-/* 去除所有元素的默认focus样式 */
 .search-bar-container *:focus {
   outline: none;
   box-shadow: none;
 }
 
-/* 去除输入框的默认focus样式 */
 .search-bar-container input:focus {
   outline: none;
   border-color: transparent;
 }
 
-/* 去除按钮的默认focus样式 */
 .search-bar-container button:focus {
   outline: none;
 }
@@ -366,7 +363,6 @@ export default {
   border-color: #4b5563;
 }
 
-/* 激活状态样式 */
 .search-bar-container.active form {
   box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
@@ -410,14 +406,12 @@ export default {
   }
 }
 
-/* 搜索引擎图标样式 */
 .search-engine-icon {
   width: 24px;
   height: 24px;
   margin-right: 0.5rem;
 }
 
-/* 搜索按钮样式 */
 .search-button {
   background-color: transparent;
   border: none;
@@ -436,7 +430,6 @@ export default {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* 搜索建议和历史记录项样式 */
 .suggestion-item,
 .history-item {
   padding: 0.5rem 1rem;
@@ -455,7 +448,6 @@ export default {
   background-color: rgba(255, 255, 255, 0.1);
 }
 
-/* 清除历史按钮样式 */
 .clear-history-button {
   background-color: transparent;
   border: none;

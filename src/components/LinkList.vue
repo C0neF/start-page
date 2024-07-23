@@ -269,6 +269,28 @@ export default {
   flex-wrap: wrap;
   gap: 1.5rem;
   justify-content: flex-start;
+  background-color: rgba(255, 255, 255, 0.1); /* 半透明白色背景 */
+  backdrop-filter: blur(10px); /* 磨砂玻璃效果 */
+  -webkit-backdrop-filter: blur(10px); /* 为 Safari 浏览器添加前缀 */
+  border-radius: 1rem; /* 圆角 */
+  padding: 1.5rem; /* 内边距 */
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* 轻微阴影 */
+}
+
+/* 深色模式下的样式 */
+.dark .desktop-bookmarks {
+  background-color: rgba(0, 0, 0, 0.2); /* 深色模式下使用半透明黑色背景 */
+}
+
+/* 为不支持 backdrop-filter 的浏览器提供回退方案 */
+@supports not (backdrop-filter: blur(10px)) {
+  .desktop-bookmarks {
+    background-color: rgba(255, 255, 255, 0.8);
+  }
+  
+  .dark .desktop-bookmarks {
+    background-color: rgba(0, 0, 0, 0.8);
+  }
 }
 
 /* 单个书签包装器样式 */

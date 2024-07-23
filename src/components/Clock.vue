@@ -1,13 +1,13 @@
 <template>
-  <div class="clock-container" @click="handleClick">
-    <div class="time">{{ currentTime }}</div>
-    <div v-if="!isMobile" class="bookmark-hint">
+  <div class="clock-container">
+    <div class="clock-content" @click="handleClick">
+      <div class="time">{{ currentTime }}</div>
     </div>
   </div>
 </template>
 
 <script>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 
 export default {
   name: 'Clock',
@@ -41,7 +41,7 @@ export default {
 
     onMounted(() => {
       updateDateTime()
-      timer = setInterval(updateDateTime, 100)
+      timer = setInterval(updateDateTime, 1000)
     })
 
     onUnmounted(() => {
@@ -50,15 +50,10 @@ export default {
       }
     })
 
-    const bookmarkHint = computed(() => {
-      return props.showBottomBookmarkBar ? '点击关闭书签栏' : '点击打开书签栏'
-    })
-
     return {
       currentTime,
       currentDate,
-      handleClick,
-      bookmarkHint
+      handleClick
     }
   }
 }
@@ -68,42 +63,47 @@ export default {
 .clock-container {
   display: flex;
   justify-content: center;
+  width: 100%;
+  padding: 0.5rem;
+  position: relative;
+  z-index: 25; /* 确保时钟在夜间模式按钮之下 */
+}
+
+.clock-content {
+  display: inline-flex; /* 改为 inline-flex */
+  flex-direction: column;
   align-items: center;
-  padding: 0.5rem 1rem;
-  background-color: rgba(255, 255, 255, 0.8);
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.3s ease;
+  user-select: none;
+  background-color: rgba(0, 0, 0, 0.5); /* 半透明背景 */
+  padding: 0.5rem 0.5rem;
   border-radius: 0.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
+}
+
+.clock-content:active {
+  transform: scale(0.98);
 }
 
 .time {
-  font-size: 1.5rem;
+  font-size: 2.5rem;
   font-weight: bold;
-  color: #2d3748;
+  line-height: 1;
 }
 
-.dark .clock-container {
-  background-color: rgba(26, 32, 44, 0.8);
-}
-
-.dark .time {
-  color: #e2e8f0;
-}
-
-@media (hover: hover) {
-  .clock-container:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  }
+.date {
+  font-size: 1rem;
+  margin-top: 0.5rem;
 }
 
 @media (max-width: 640px) {
-  .clock-container {
-    padding: 0.25rem 0.5rem;
+  .time {
+    font-size: 2rem;
   }
 
-  .time {
-    font-size: 1rem;
+  .date {
+    font-size: 0.875rem;
   }
 }
 </style>
