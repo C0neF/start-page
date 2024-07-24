@@ -470,7 +470,7 @@ button:active {
   }
   
   input[type="number"] {
-    width: 2rem;
+    width: 3rem;
     padding: 0.25rem;
   }
   

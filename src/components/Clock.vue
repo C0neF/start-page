@@ -1,7 +1,8 @@
 <template>
-  <div class="clock-container">
-    <div class="clock-content" @click="handleClick">
+  <div class="clock-container" @click="handleClick">
+    <div class="clock-content">
       <div class="time">{{ currentTime }}</div>
+
     </div>
   </div>
 </template>

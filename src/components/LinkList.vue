@@ -597,11 +597,6 @@ export default {
   color: #f87171;
 }
 
-.dark .add-bookmark:hover,
-.dark .mobile-bookmark-wrapper.add-bookmark:hover {
-  background-color: rgba(255, 255, 255, 0.1);
-}
-
 .dark .mobile-bookmark-wrapper.add-bookmark {
   background-color: rgba(255, 255, 255, 0.05);
 }

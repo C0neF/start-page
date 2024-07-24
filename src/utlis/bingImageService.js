@@ -20,7 +20,7 @@ export async function getBingDailyImage() {
     return getHighestResolutionUrl(image.url);
   } catch (error) {
     console.error('Error fetching Bing daily image:', error);
-    return 'https://picsum.photos/1920/1080'; // 默认图片
+    return '';
   }
 }
 

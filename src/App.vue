@@ -1,207 +1,209 @@
 <template>
- <div id="app" class="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300 relative" @click="handleOutsideClick">
-    <!-- 背景图片 -->
-    <div v-if="backgroundImage" class="fixed inset-0 z-0">
-      <img :src="backgroundImage" alt="Background" class="w-full h-full object-cover">
-    </div>
-    
-    <!-- 半透明遮罩层 -->
-    <div class="fixed inset-0 bg-black bg-opacity-30 z-0"></div>
-
-    <!-- 毛玻璃效果背景 -->
-    <div 
-      v-show="!isMobile && isSearchActive" 
-      class="fixed inset-0 bg-white bg-opacity-70 dark:bg-gray-900 dark:bg-opacity-70 backdrop-blur-md z-10 transition-opacity duration-300"
-    ></div>
-    
-    <div :class="['container', 'mx-auto', 'px-4', 'py-8', 'flex', 'flex-col', 'items-center', 'relative', 'min-h-screen', { 'mobile-layout': isMobile }]">
-      <!-- 顶部按钮栏 -->
-    <div class="fixed top-0 left-0 right-0 flex justify-between items-center p-4 z-30 top-button-bar">
-      <!-- 响应式设备的书签按钮 -->
-      <button 
-        v-if="isMobile"
-        @click.stop="toggleLeftSidebar" 
-        class="text-white hover:text-gray-200 transition-all duration-300"
-        :class="{ 'opacity-0 invisible': showLeftSidebar }"
-      >
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
-        </svg>
-      </button>
-
-      <!-- 占位符 div，用于在桌面模式下保持布局 -->
-      <div v-if="!isMobile" class="w-6"></div>
-
-      <!-- 夜间模式切换按钮（桌面端和移动端） -->
-      <button @click.stop="toggleNightMode" class="text-white hover:text-gray-200 transition duration-300">
-        <svg v-if="isNightMode" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-        </svg>
-        <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
-        </svg>
-      </button>
-    </div>
-
-      <!-- 时钟组件 -->
-      <Clock 
-        :class="['mb-8', 'text-center', 'text-white', { 'mobile-title': isMobile }]"
-        :isMobile="isMobile"
-        :showBottomBookmarkBar="showBottomBookmarkBar"
-        @toggleBottomBookmarkBar="toggleBottomBookmarkBar"
-      />
-      
-      <!-- 搜索栏组件 -->
-      <div :class="['w-full', 'max-w-2xl', 'search-bar-container', { 'active': isSearchActive }]">
-        <SearchBar 
-          class="w-full relative z-20" 
-          :searchEngines="searchEngines" 
-          :currentEngineIndex="currentEngineIndex" 
-          :isMobile="isMobile"
-          @searchActivated="handleSearchActivated"
-        />
-      </div>
-
-      <!-- 书签列表组件（桌面端主页） -->
-      <LinkList 
-        v-if="!isMobile && showDesktopBookmarks"
-        :bookmarks="bookmarks" 
-        @update:bookmarks="updateBookmarks" 
-        :showLeftSidebar="showLeftSidebar"
-        @close-left-sidebar="closeLeftSidebar"
-        @open-add-bookmark-modal="openAddLinkModal"
-        :isMobile="isMobile"
-        :isBookmarkBar="false"
-        class="w-full desktop-bookmark-bar"
-        v-show="!isSearchActive"
-      />
-
-      <!-- 设置按钮（所有设备都显示） -->
-      <button 
-        @click.stop="toggleSidebar" 
-        class="fixed bottom-4 right-4 text-white hover:text-gray-200 transition-all duration-300 z-50"
-        :class="{ 'opacity-0 invisible': showSidebar }"
-      >
-        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
-        </svg>
-      </button>
-
-      <!-- 遮罩层 -->
-      <transition name="fade">
-        <div 
-          v-if="showLeftSidebar || showSidebar || showAddLinkModal || showEngineManager || showBottomBookmarkBar" 
-          class="fixed inset-0 bg-black bg-opacity-50 z-30"
-          @click.stop="closeAllSidebars"
-        ></div>
-      </transition>
-
-      <!-- 左侧边栏（书签侧边栏） -->
-      <transition name="slide">
-        <div v-if="showLeftSidebar" class="fixed inset-y-0 left-0 w-3/4 bg-transparent shadow-lg z-40 overflow-y-auto sidebar left-sidebar">
-          <div class="p-4 backdrop-blur-md bg-white bg-opacity-10 dark:bg-gray-800 dark:bg-opacity-10 h-full">
-            <div class="flex justify-between items-center mb-4">
-              <h2 class="text-xl font-bold text-white">书签</h2>
-              <button @click="closeLeftSidebar" class="text-white hover:text-gray-200">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-            </div>
-            <LinkList 
-              :bookmarks="bookmarks" 
-              @update:bookmarks="updateBookmarks" 
-              :showLeftSidebar="showLeftSidebar"
-              @close-left-sidebar="closeLeftSidebar"
-              @open-add-bookmark-modal="openAddLinkModal"
-              :isMobile="true"
-              :isBookmarkBar="false"
-              class="w-full"
-            />
-          </div>
-        </div>
-      </transition>
-
-      <!-- 右侧边栏组件（设置侧边栏） -->
-      <transition name="slide">
-        <div v-if="showSidebar" class="fixed inset-y-0 right-0 w-3/4 max-w-md z-40 overflow-hidden sidebar right-sidebar backdrop-blur-md bg-white bg-opacity-10 dark:bg-gray-800 dark:bg-opacity-10">
-          <Sidebar 
-            :show="showSidebar"
-            :bookmarks="bookmarks"
-            :searchEngines="searchEngines"
-            :defaultEngineIndex="currentEngineIndex"
-            :unsplashChangeInterval="unsplashChangeInterval"
-            v-model:showDesktopBookmarks="showDesktopBookmarks"
-            :isMobile="isMobile"
-            @close="showSidebar = false"
-            @linkAdded="handleLinkAdded"
-            @linkUpdated="handleLinkUpdated"
-            @update:bookmarks="updateBookmarks"
-            @updateDefaultEngine="updateDefaultEngine"
-            @settingsImported="importSettings"
-            @openAddLinkModal="openAddLinkModal"
-            @openEngineManager="openEngineManager"
-            @setBackgroundImage="setBackgroundImage"
-            @setUnsplashImage="setUnsplashImage"
-            @updateUnsplashInterval="updateUnsplashInterval"
-            @updateUnsplashAccessKey="updateUnsplashAccessKey"
-            class="h-full overflow-y-auto"
-          />
-        </div>
-      </transition>
-
-      <!-- 添加书签模态框 -->
-      <transition name="fade">
-        <div v-if="showAddLinkModal" class="fixed inset-0 flex items-center justify-center z-50">
-          <AddLinkModal
-            :show="showAddLinkModal"
-            @close="closeAddLinkModal"
-            @linkAdded="handleLinkAdded"
-          />
-        </div>
-      </transition>
-
-      <!-- 搜索引擎管理器模态框 -->
-      <transition name="fade">
-        <div v-if="showEngineManager" class="fixed inset-0 flex items-center justify-center z-50">
-          <EngineManager
-            :show="showEngineManager"
-            :initialDefaultEngineIndex="currentEngineIndex"
-            @close="closeEngineManager"
-            @engines-updated="handleEnginesUpdated"
-            @default-engine-updated="handleDefaultEngineUpdated"
-          />
-        </div>
-      </transition>
-
-      <!-- 底部书签栏（仅桌面端） -->
-      <transition name="slide-up">
-        <div v-if="!isMobile && showBottomBookmarkBar" class="fixed bottom-0 left-0 right-0 dark:bg-gray-800 shadow-lg z-40">
-          <div class="container mx-auto px-4 py-2">
-            <div class="flex justify-between items-center mb-2">
-              <h3 class="text-lg font-bold text-white">书签</h3>
-              <button @click="closeBottomBookmarkBar" class="text-gray-200 hover:hover:text-gray-200 transition duration-300 z-20 dark:text-gray-400 dark:hover:text-gray-200">
-                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
-                </svg>
-              </button>
-            </div>
-            <LinkList 
-              :bookmarks="bookmarks" 
-              @update:bookmarks="updateBookmarks" 
-              :showLeftSidebar="false"
-              @open-add-bookmark-modal="openAddLinkModal"
-              :isMobile="false"
-              :isBookmarkBar="true"
-              class="w-full"
-            />
-          </div>
-        </div>
-      </transition>
-    </div>
-  </div>
-</template>
+  <div id="app" class="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-900 dark:text-gray-100 transition-colors duration-300 relative" @click="handleOutsideClick">
+     <!-- 背景图片 -->
+     <div v-if="backgroundImage" class="fixed inset-0 z-0">
+       <img :src="backgroundImage" alt="Background" class="w-full h-full object-cover">
+     </div>
+     
+     <!-- 半透明遮罩层 -->
+     <div class="fixed inset-0 bg-black bg-opacity-30 z-0"></div>
+ 
+     <!-- 毛玻璃效果背景 -->
+     <div 
+       v-show="!isMobile && isSearchActive" 
+       class="fixed inset-0 bg-white bg-opacity-70 dark:bg-gray-900 dark:bg-opacity-70 backdrop-blur-md z-10 transition-opacity duration-300"
+     ></div>
+     
+     <div :class="['container', 'mx-auto', 'px-4', 'py-8', 'flex', 'flex-col', 'items-center', 'relative', 'min-h-screen', { 'mobile-layout': isMobile }]">
+       <!-- 顶部按钮栏 -->
+       <div class="fixed top-0 left-0 right-0 flex justify-between items-center p-4 z-30 top-button-bar">
+         <!-- 响应式设备的书签按钮 -->
+         <button 
+           v-if="isMobile"
+           @click.stop="toggleLeftSidebar" 
+           class="text-white hover:text-gray-200 transition-all duration-300"
+           :class="{ 'opacity-0 invisible': showLeftSidebar }"
+         >
+           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path>
+           </svg>
+         </button>
+ 
+         <!-- 占位符 div，用于在桌面模式下保持布局 -->
+         <div v-if="!isMobile" class="w-6"></div>
+ 
+         <!-- 夜间模式切换按钮（桌面端和移动端） -->
+         <button @click.stop="toggleNightMode" class="text-white hover:text-gray-200 transition duration-300">
+           <svg v-if="isNightMode" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+           </svg>
+           <svg v-else class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"></path>
+           </svg>
+         </button>
+       </div>
+ 
+       <!-- 时钟组件 - 仅在移动端或桌面端书签栏未显示时显示 -->
+       <Clock 
+         v-if="isMobile || !showBottomBookmarkBar"
+         :class="['mb-8', 'text-center', 'text-white', { 'mobile-title': isMobile }]"
+         :isMobile="isMobile"
+         :showBottomBookmarkBar="showBottomBookmarkBar"
+         @toggleBottomBookmarkBar="toggleBottomBookmarkBar"
+       />
+       
+       <!-- 搜索栏组件 -->
+       <div :class="['w-full', 'max-w-2xl', 'search-bar-container', { 'active': isSearchActive }]">
+         <SearchBar 
+           class="w-full relative z-20" 
+           :searchEngines="searchEngines" 
+           :currentEngineIndex="currentEngineIndex" 
+           :isMobile="isMobile"
+           @searchActivated="handleSearchActivated"
+         />
+       </div>
+ 
+       <!-- 书签列表组件（桌面端主页） -->
+       <LinkList 
+         v-if="!isMobile && showDesktopBookmarks"
+         :bookmarks="bookmarks" 
+         @update:bookmarks="updateBookmarks" 
+         :showLeftSidebar="showLeftSidebar"
+         @close-left-sidebar="closeLeftSidebar"
+         @open-add-bookmark-modal="openAddLinkModal"
+         :isMobile="isMobile"
+         :isBookmarkBar="false"
+         class="w-full desktop-bookmark-bar"
+         v-show="!isSearchActive"
+       />
+ 
+       <!-- 设置按钮（所有设备都显示） -->
+       <button 
+         @click.stop="toggleSidebar" 
+         class="fixed bottom-4 right-4 text-white hover:text-gray-200 transition-all duration-300 z-50"
+         :class="{ 'opacity-0 invisible': showSidebar }"
+       >
+         <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+         </svg>
+       </button>
+ 
+       <!-- 遮罩层 -->
+       <transition name="fade">
+         <div 
+           v-if="showLeftSidebar || showSidebar || showAddLinkModal || showEngineManager || showBottomBookmarkBar" 
+           class="fixed inset-0 bg-black bg-opacity-50 z-30"
+           @click.stop="closeAllSidebars"
+         ></div>
+       </transition>
+ 
+       <!-- 左侧边栏（书签侧边栏） -->
+       <transition name="slide">
+         <div v-if="showLeftSidebar" class="fixed inset-y-0 left-0 w-3/4 bg-transparent shadow-lg z-40 overflow-y-auto sidebar left-sidebar">
+           <div class="p-4 backdrop-blur-md bg-white bg-opacity-10 dark:bg-gray-800 dark:bg-opacity-10 h-full">
+             <div class="flex justify-between items-center mb-4">
+               <h2 class="text-xl font-bold text-white">书签</h2>
+               <button @click="closeLeftSidebar" class="text-white hover:text-gray-200">
+                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                 </svg>
+               </button>
+             </div>
+             <LinkList 
+               :bookmarks="bookmarks" 
+               @update:bookmarks="updateBookmarks" 
+               :showLeftSidebar="showLeftSidebar"
+               @close-left-sidebar="closeLeftSidebar"
+               @open-add-bookmark-modal="openAddLinkModal"
+               :isMobile="true"
+               :isBookmarkBar="false"
+               class="w-full"
+             />
+           </div>
+         </div>
+       </transition>
+ 
+       <!-- 右侧边栏组件（设置侧边栏） -->
+       <transition name="slide">
+         <div v-if="showSidebar" class="fixed inset-y-0 right-0 w-3/4 max-w-md z-40 overflow-hidden sidebar right-sidebar backdrop-blur-md bg-white bg-opacity-10 dark:bg-gray-800 dark:bg-opacity-10">
+           <Sidebar 
+             :show="showSidebar"
+             :bookmarks="bookmarks"
+             :searchEngines="searchEngines"
+             :defaultEngineIndex="currentEngineIndex"
+             :unsplashChangeInterval="unsplashChangeInterval"
+             v-model:showDesktopBookmarks="showDesktopBookmarks"
+             :isMobile="isMobile"
+             @close="showSidebar = false"
+             @linkAdded="handleLinkAdded"
+             @linkUpdated="handleLinkUpdated"
+             @update:bookmarks="updateBookmarks"
+             @updateDefaultEngine="updateDefaultEngine"
+             @settingsImported="importSettings"
+             @openAddLinkModal="openAddLinkModal"
+             @openEngineManager="openEngineManager"
+             @setBackgroundImage="setBackgroundImage"
+             @setUnsplashImage="setUnsplashImage"
+             @updateUnsplashInterval="updateUnsplashInterval"
+             @updateUnsplashAccessKey="updateUnsplashAccessKey"
+             class="h-full overflow-y-auto"
+           />
+         </div>
+       </transition>
+ 
+       <!-- 添加书签模态框 -->
+       <transition name="fade">
+         <div v-if="showAddLinkModal" class="fixed inset-0 flex items-center justify-center z-50">
+           <AddLinkModal
+             :show="showAddLinkModal"
+             @close="closeAddLinkModal"
+             @linkAdded="handleLinkAdded"
+           />
+         </div>
+       </transition>
+ 
+       <!-- 搜索引擎管理器模态框 -->
+       <transition name="fade">
+         <div v-if="showEngineManager" class="fixed inset-0 flex items-center justify-center z-50">
+           <EngineManager
+             :show="showEngineManager"
+             :initialDefaultEngineIndex="currentEngineIndex"
+             @close="closeEngineManager"
+             @engines-updated="handleEnginesUpdated"
+             @default-engine-updated="handleDefaultEngineUpdated"
+           />
+         </div>
+       </transition>
+ 
+       <!-- 底部书签栏（仅桌面端） -->
+       <transition name="slide-up">
+         <div v-if="!isMobile && showBottomBookmarkBar" class="fixed bottom-0 left-0 right-0 shadow-lg z-40 bottom-bookmark-bar">
+           <div class="container mx-auto px-4 py-2">
+             <div class="flex justify-between items-center mb-2">
+               <!-- 在桌面端书签栏显示时，将时钟组件移到这里 -->
+               <Clock 
+                 :class="['text-center', 'text-white', 'bottom-bar-clock']"
+                 :isMobile="false"
+                 :showBottomBookmarkBar="showBottomBookmarkBar"
+                 @toggleBottomBookmarkBar="toggleBottomBookmarkBar"
+               />
+             </div>
+             <LinkList 
+               :bookmarks="bookmarks" 
+               @update:bookmarks="updateBookmarks" 
+               :showLeftSidebar="false"
+               @open-add-bookmark-modal="openAddLinkModal"
+               :isMobile="false"
+               :isBookmarkBar="true"
+               class="w-full"
+             />
+           </div>
+         </div>
+       </transition>
+     </div>
+   </div>
+ </template>
 
 <script>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
@@ -417,11 +419,12 @@ watch(showDesktopBookmarks, (newValue) => {
     const setBackgroundImage = async (imageUrl) => {
   if (imageUrl) {
     backgroundImage.value = imageUrl;
+    localStorage.setItem('backgroundImage', backgroundImage.value);
   } else {
-    // 移除默认图片，使用纯色背景
+    // 如果没有提供图片 URL,则清除背景图片
     backgroundImage.value = '';
+    localStorage.removeItem('backgroundImage');
   }
-  localStorage.setItem('backgroundImage', backgroundImage.value);
 }
 
     const setUnsplashImage = async () => {
@@ -471,10 +474,6 @@ watch(showDesktopBookmarks, (newValue) => {
   }
 }
 
-    const closeBottomBookmarkBar = () => {
-      showBottomBookmarkBar.value = false
-    }
-
     onMounted(() => {
       loadBookmarks()
       loadSearchEngines()
@@ -490,7 +489,7 @@ watch(showDesktopBookmarks, (newValue) => {
       if (savedBackgroundImage) {
         backgroundImage.value = savedBackgroundImage;
       } else {
-        setBackgroundImage(); // 这将获取 Bing 图片或使用默认图片
+        backgroundImage.value = '';
       }
 
       if (unsplashChangeInterval.value > 0) {
@@ -551,7 +550,6 @@ watch(showDesktopBookmarks, (newValue) => {
       updateUnsplashAccessKey,
       updateShowDesktopBookmarks,
       toggleBottomBookmarkBar,
-      closeBottomBookmarkBar
     }
   }
 }
@@ -559,6 +557,15 @@ watch(showDesktopBookmarks, (newValue) => {
 
 <style>
 /* 基础样式 */
+
+#app {
+  background-color: #f3f4f6; /* 浅灰色背景 */
+}
+
+.dark #app {
+  background-color: #1f2937; /* 深色模式下的深灰色背景 */
+}
+
 .container {
   min-height: 100vh;
   padding-bottom: 3rem; /* 为时钟腾出空间 */
@@ -703,6 +710,15 @@ watch(showDesktopBookmarks, (newValue) => {
   .dark .sidebar {
     background-color: rgba(26, 32, 44, 0.9);
   }
+
+  .bottom-bookmark-bar {
+    background-color: rgba(255, 255, 255, 0.8);
+  }
+
+  .dark .bottom-bookmark-bar {
+    background-color: rgba(26, 32, 44, 0.8);
+  }
+
 }
 
 /* 按钮样式 */
@@ -813,16 +829,10 @@ a:focus, input:focus {
 
 /* 底部书签栏样式 */
 .bottom-bookmark-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
   background-color: rgba(255, 255, 255, 0.1);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
   box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
-  z-index: 30;
-  padding: 1rem;
   transition: transform 0.3s ease;
 }
 
@@ -900,25 +910,6 @@ body {
 .desktop-bookmark-bar {
   margin-top: 2rem;
   padding: 1rem;
-  background-color: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
-  border-radius: 1rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-}
-
-.dark .desktop-bookmark-bar {
-  background-color: rgba(26, 32, 44, 0.1);
-}
-
-@supports not (backdrop-filter: blur(10px)) {
-  .desktop-bookmark-bar {
-    background-color: rgba(255, 255, 255, 0.8);
-  }
-
-  .dark .desktop-bookmark-bar {
-    background-color: rgba(26, 32, 44, 0.8);
-  }
 }
 
 </style>
